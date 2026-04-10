@@ -26,5 +26,9 @@ try {
     console.log('✅ Prisma migrations applied');
   }
 } catch (err) {
-  console.warn('⚠️ Prisma generate failed (will retry during build)');
+  const message = err instanceof Error ? err.message : String(err);
+  console.error('❌ Prisma bootstrap failed.');
+  console.error(message);
+  process.exitCode = 1;
+  throw err;
 }
