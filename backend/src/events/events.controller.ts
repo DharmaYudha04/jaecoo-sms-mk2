@@ -1,12 +1,14 @@
 import { Controller, Get, Headers, Query, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { parseAccessToken, parseToken } from '../common/auth';
+import { Public } from '../common/auth.guard';
 import { RealtimeService } from './realtime.service';
 
 @Controller('events')
 export class EventsController {
   constructor(private readonly realtimeService: RealtimeService) {}
 
+  @Public()
   @Get('stream')
   stream(
     @Headers('authorization') authorization: string | undefined,
