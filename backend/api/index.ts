@@ -1,5 +1,8 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { NestFactory } from '@nestjs/core';
 import { createApp } from '../src/app.factory';
+
+void NestFactory;
 
 let cachedHandler:
   | ((req: IncomingMessage, res: ServerResponse) => void)
