@@ -1,0 +1,13 @@
+File/pola yang sengaja tidak disertakan di ZIP final:
+- .env (root dan backend)
+- .git/
+- node_modules/
+- dist/
+- *.tsbuildinfo
+- root/package-lock.json yang tidak dipakai oleh backend/frontend
+- modify.py
+
+Migrasi patch notifikasi yang dibuang karena duplikat/bentrok:
+- backend/prisma/migrations/20260409090000_notifications_per_user_broadcast_push
+- backend/prisma/migrations/20260409_fix_notification_stage2
+- backend/prisma/migrations/20260409_notification_per_user_realtime

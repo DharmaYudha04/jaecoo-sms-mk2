@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum StatusServis {
+  ANTRIAN
+  DIKERJAKAN
+  TEST_DRIVE
+  SELESAI
+  DIAMBIL
+  TERKENDALA
+}
+
+enum Role {
+  MEKANIK
+  FRONTLINE
+  MANAGER
+  ADMIN
+}
+
+enum WorkOrderStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+  CANCELLED
+}
+
+enum PriorityLevel {
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum AuditLogStatus {
+  SUCCESS
+  FAILED
+}
+
+enum WashRequestStatus {
+  TIDAK_PERLU
+  MENUNGGU
+  SELESAI
+}
+
+model User {
+  id_user                Int                     @id @default(autoincrement())
+  email                  String                  @unique
+  password               String
+  role                   Role
+  isActive               Boolean                 @default(true)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  createdWorkOrders      WorkOrder[]             @relation("WorkOrderCreatedBy")
+  auditLogs              AuditLog[]
+  createdNotifications   Notification[]          @relation("NotificationCreatedBy")
+  notificationRecipients NotificationRecipient[]
+  pushSubscriptions      PushSubscription[]
+}
+
+model Pemilik {
+  nik       String   @id
+  nama      String
+  no_hp     String?
+  alamat    String?
+  createdAt DateTime @default(now())
+
+  kendaraan Kendaraan[]
+}
+
+model Kendaraan {
+  no_rangka   String   @id
+  plat_nomor  String   @unique
+  jenis_mobil String?
+  warna       String?
+  tahun       Int?
+  kilometer   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  nik_pemilik String
+  pemilik     Pemilik @relation(fields: [nik_pemilik], references: [nik], onDelete: Cascade)
+
+  work_orders WorkOrder[]
+}
+
+model WorkOrder {
+  id_wo              Int             @id @default(autoincrement())
+  nomor_wo_pusat     String?
+  waktuMasuk         DateTime        @default(now())
+  status             WorkOrderStatus @default(OPEN)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  no_rangka          String
+  kendaraan          Kendaraan       @relation(fields: [no_rangka], references: [no_rangka], onDelete: Cascade)
+  created_by_user_id Int?
+  createdBy          User?           @relation("WorkOrderCreatedBy", fields: [created_by_user_id], references: [id_user], onDelete: SetNull)
+  servis             Servis[]
+}
+
+model Servis {
+  id_servis        Int               @id @default(autoincrement())
+  keluhan          String
+  estimasiSelesai  DateTime?
+  tanggalSelesai   DateTime?
+  status           StatusServis      @default(ANTRIAN)
+  prioritas        PriorityLevel     @default(NORMAL)
+  statusCuciMobil  WashRequestStatus @default(TIDAK_PERLU)
+  catatanCuciMobil String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  id_wo            Int
+  workOrder        WorkOrder         @relation(fields: [id_wo], references: [id_wo], onDelete: Cascade)
+  detail_servis    DetailServis[]
+  catatan          CatatanMekanik[]
+  riwayat          RiwayatServis[]
+}
+
+model JenisServis {
+  id_jenis_servis Int      @id @default(autoincrement())
+  nama_servis     String   @unique
+  createdAt       DateTime @default(now())
+
+  detail_servis DetailServis[]
+}
+
+model DetailServis {
+  id_detail        Int          @id @default(autoincrement())
+  id_servis        Int
+  servis           Servis       @relation(fields: [id_servis], references: [id_servis], onDelete: Cascade)
+  id_jenis_servis  Int
+  jenis_servis     JenisServis  @relation(fields: [id_jenis_servis], references: [id_jenis_servis], onDelete: Restrict)
+  keterangan       String?
+}
+
+model CatatanMekanik {
+  id_catatan Int      @id @default(autoincrement())
+  id_servis  Int
+  servis     Servis   @relation(fields: [id_servis], references: [id_servis], onDelete: Cascade)
+  catatan    String
+  waktu      DateTime @default(now())
+}
+
+model RiwayatServis {
+  id_riwayat Int          @id @default(autoincrement())
+  id_servis  Int
+  servis     Servis       @relation(fields: [id_servis], references: [id_servis], onDelete: Cascade)
+  status     StatusServis
+  waktu      DateTime     @default(now())
+}
+
+model AuditLog {
+  id          Int            @id @default(autoincrement())
+  createdAt   DateTime       @default(now())
+  actorUserId Int?
+  actorEmail  String?
+  actorRole   Role?
+  action      String
+  module      String
+  entityType  String?
+  entityId    String?
+  entityLabel String?
+  status      AuditLogStatus @default(SUCCESS)
+  message     String?
+  metadata    Json?
+  ipAddress   String?
+  userAgent   String?
+
+  actorUser User? @relation(fields: [actorUserId], references: [id_user], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([module, action])
+  @@index([actorEmail])
+  @@index([status])
+}
+
+model Notification {
+  id              Int                     @id @default(autoincrement())
+  type            String
+  title           String
+  message         String
+  entityType      String?
+  entityId        String?
+  targetPath      String?
+  createdAt       DateTime                @default(now())
+  createdByUserId Int?
+  createdBy       User?                   @relation("NotificationCreatedBy", fields: [createdByUserId], references: [id_user], onDelete: SetNull)
+  recipients      NotificationRecipient[]
+
+  @@index([type, createdAt])
+  @@index([createdAt])
+}
+
+model NotificationRecipient {
+  id             Int          @id @default(autoincrement())
+  notificationId Int
+  userId         Int
+  roleSnapshot   Role
+  isRead         Boolean      @default(false)
+  readAt         DateTime?
+  isSeen         Boolean      @default(false)
+  seenAt         DateTime?
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id_user], onDelete: Cascade)
+
+  @@unique([notificationId, userId])
+  @@index([userId, isRead])
+  @@index([userId, isSeen])
+}
+
+model PushSubscription {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  userAgent  String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  lastUsedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id_user], onDelete: Cascade)
+
+  @@index([userId, isActive])
+}
