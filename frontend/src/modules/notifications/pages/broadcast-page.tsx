@@ -15,6 +15,7 @@ import { getErrorMessage } from '@/common/lib/request-error';
 import { BroadcastComposerCard } from '@/modules/notifications/components/broadcast-composer-card';
 import { useBroadcasts, useClearBroadcasts, useDeleteBroadcast, useMarkAllBroadcastsRead, useMarkBroadcastRead } from '@/modules/notifications/hooks/use-notifications';
 import type { AppNotification } from '@/common/types/domain';
+import type { NotificationFilter } from '@/modules/notifications/types/notification.types';
 
 const PAGE_SIZE = 20;
 
@@ -33,7 +34,7 @@ export function BroadcastPage() {
   const [openingId, setOpeningId] = useState<number | null>(null);
   const [pendingReadId, setPendingReadId] = useState<number | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
-  const filters = useMemo(() => ({ search, status, sort }), [search, status, sort]);
+  const filters = useMemo<NotificationFilter>(() => ({ search, status, sort }), [search, status, sort]);
   const broadcastsQuery = useBroadcasts(filters);
   const markReadMutation = useMarkBroadcastRead();
   const deleteMutation = useDeleteBroadcast();

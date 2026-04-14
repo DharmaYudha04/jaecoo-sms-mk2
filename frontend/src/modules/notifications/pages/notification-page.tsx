@@ -14,6 +14,7 @@ import { SearchIcon, TrashIcon } from '@/common/components/ui/action-icons';
 import { getErrorMessage } from '@/common/lib/request-error';
 import { useClearNotifications, useDeleteNotification, useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from '@/modules/notifications/hooks/use-notifications';
 import type { AppNotification } from '@/common/types/domain';
+import type { NotificationFilter } from '@/modules/notifications/types/notification.types';
 
 const PAGE_SIZE = 20;
 
@@ -32,7 +33,7 @@ export function NotificationPage() {
   const [openingId, setOpeningId] = useState<number | null>(null);
   const [pendingReadId, setPendingReadId] = useState<number | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
-  const filters = useMemo(() => ({ search, status, sort }), [search, status, sort]);
+  const filters = useMemo<NotificationFilter>(() => ({ search, status, sort }), [search, status, sort]);
   const notificationsQuery = useNotifications(filters);
   const markReadMutation = useMarkNotificationRead();
   const deleteMutation = useDeleteNotification();
