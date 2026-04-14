@@ -1,0 +1,27 @@
+src
+├── app
+│   ├── providers
+│   └── router
+├── common
+│   ├── components
+│   │   ├── data-display
+│   │   ├── feedback
+│   │   └── ui
+│   ├── hooks
+│   ├── layout
+│   ├── styles
+│   ├── types
+│   └── utils
+├── config
+├── modules
+│   ├── auth
+│   ├── customers
+│   ├── dashboard
+│   ├── mechanic
+│   ├── reports
+│   ├── schedules
+│   ├── services
+│   ├── users
+│   ├── vehicles
+│   └── work-orders
+└── services
