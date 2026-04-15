@@ -32,12 +32,16 @@ export function signToken(user: AuthUser): string {
 }
 
 export function parseToken(header?: string): AuthUser {
-  if (!header?.startsWith('Bearer ')) {
+  let raw: string;
+  if (header?.startsWith('Bearer ')) {
+    raw = header.slice(7);
+  } else if (header) {
+    raw = header;
+  } else {
     throw new UnauthorizedException('Token tidak ditemukan.');
   }
 
   try {
-    const raw = header.slice(7);
     const payload = jwt.verify(raw, getJwtSecret(), {
       issuer: 'jaecoo-backend',
       audience: 'jaecoo-frontend',

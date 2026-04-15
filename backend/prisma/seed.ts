@@ -23,9 +23,6 @@ async function upsertUser(fullName: string, email: string, password: string, rol
 
 async function main() {
   await upsertUser('Admin Service', 'admin@service.com', 'Admin123!', 'ADMIN');
-  await upsertUser('Frontline Service', 'frontline@service.com', 'Frontline123!', 'FRONTLINE');
-  await upsertUser('Manager Service', 'manager@service.com', 'Manager123!', 'MANAGER');
-  await upsertUser('Mekanik Service', 'mechanic@service.com', 'Mechanic123!', 'MEKANIK');
 }
 
 main()
