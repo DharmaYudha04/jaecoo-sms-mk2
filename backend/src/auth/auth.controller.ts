@@ -18,7 +18,7 @@ export class AuthController {
     @Body() body: { email: string; password: string },
     @Req() req: Request,
   ) {
-    const normalizedEmail = body.email.trim().toLowerCase();
+    const normalizedEmail = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
 
     try {
       const result = await this.authService.login(body.email, body.password);

@@ -19,14 +19,29 @@ export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
   async login(email: string, password: string) {
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      throw new UnauthorizedException('Email atau password tidak valid.');
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
+    const rawPassword = password.trim();
+    if (!normalizedEmail || !rawPassword) {
+      throw new UnauthorizedException('Email atau password tidak valid.');
+    }
+
     const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Email atau password tidak valid.');
     }
 
-    const validPassword = compareSync(password, user.password);
+    let validPassword = false;
+    try {
+      validPassword = compareSync(rawPassword, user.password);
+    } catch {
+      // Guard against invalid password hash values stored in DB.
+      throw new UnauthorizedException('Email atau password tidak valid.');
+    }
     if (!validPassword) {
       throw new UnauthorizedException('Email atau password tidak valid.');
     }
