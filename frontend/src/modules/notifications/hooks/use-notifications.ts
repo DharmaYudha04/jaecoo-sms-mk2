@@ -18,7 +18,7 @@ import {
 import type { NotificationFilter } from '@/modules/notifications/types/notification.types';
 import type { AppNotification, Role } from '@/common/types/domain';
 
-const FALLBACK_REFETCH_MS = 4000;
+const FALLBACK_REFETCH_MS = false;
 
 function removeItemFromCaches(queryClient: ReturnType<typeof useQueryClient>, namespace: 'notifications' | 'broadcasts', id: number) {
   const queryPrefix = namespace === 'notifications' ? 'notifications' : 'broadcasts';

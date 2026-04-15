@@ -37,6 +37,10 @@ export function useRealtimeEvents(enabled = true) {
 
       source.addEventListener('notification.created', handleMessage as EventListener);
       source.addEventListener('broadcast.created', handleMessage as EventListener);
+      source.addEventListener('notification.read', handleMessage as EventListener);
+      source.addEventListener('broadcast.read', handleMessage as EventListener);
+      source.addEventListener('notifications.read', handleMessage as EventListener);
+      source.addEventListener('broadcasts.read', handleMessage as EventListener);
       source.addEventListener('ready', handleMessage as EventListener);
 
       source.onerror = () => {
