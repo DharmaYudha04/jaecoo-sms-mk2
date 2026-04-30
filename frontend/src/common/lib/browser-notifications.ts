@@ -3,6 +3,12 @@ import type { AppNotification } from '@/common/types/domain';
 
 export type BrowserNotificationPermission = NotificationPermission | 'unsupported';
 
+type NotificationPayload = {
+  title: string;
+  message: string;
+  tag?: string;
+};
+
 export function getBrowserNotificationPermission(): BrowserNotificationPermission {
   if (typeof window === 'undefined' || !('Notification' in window)) {
     return 'unsupported';
@@ -23,6 +29,44 @@ export function useBrowserNotificationPermissionStatus() {
   };
 }
 
+async function getReadyServiceWorkerRegistration(): Promise<ServiceWorkerRegistration | null> {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return null;
+
+  try {
+    const existing = await navigator.serviceWorker.getRegistration('/notification-sw.js');
+    if (existing) return existing;
+
+    await navigator.serviceWorker.register('/notification-sw.js');
+    return await navigator.serviceWorker.ready;
+  } catch {
+    return null;
+  }
+}
+
+async function showBrowserNotification(payload: NotificationPayload): Promise<void> {
+  if (typeof window === 'undefined' || !('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+
+  const options: NotificationOptions = {
+    body: payload.message,
+    tag: payload.tag,
+  };
+
+  const registration = await getReadyServiceWorkerRegistration();
+  if (registration?.showNotification) {
+    await registration.showNotification(payload.title, options);
+    return;
+  }
+
+  try {
+    new Notification(payload.title, options);
+  } catch {
+    // Some mobile browsers, especially Chrome Android, expose Notification
+    // but reject the constructor. In that case we silently skip the local
+    // browser toast instead of crashing the whole React app.
+  }
+}
+
 export function useBrowserNotifications(items: AppNotification[] | undefined) {
   const seenRef = useRef<Set<number>>(new Set());
 
@@ -34,9 +78,12 @@ export function useBrowserNotifications(items: AppNotification[] | undefined) {
       if (seenRef.current.has(item.id)) return;
       seenRef.current.add(item.id);
       if (item.isRead) return;
-      if (Notification.permission === 'granted') {
-        new Notification(item.title, { body: item.message, tag: `jaecoo-${item.id}` });
-      }
+
+      void showBrowserNotification({
+        title: item.title,
+        message: item.message,
+        tag: `jaecoo-${item.id}`,
+      });
     });
   }, [items]);
 }
@@ -48,7 +95,5 @@ export async function requestBrowserNotificationPermission(): Promise<BrowserNot
 }
 
 export function showNotificationFromPayload(payload: { title: string; message: string }) {
-  if (typeof window === 'undefined' || !('Notification' in window)) return;
-  if (Notification.permission !== 'granted') return;
-  new Notification(payload.title, { body: payload.message });
+  void showBrowserNotification(payload);
 }
