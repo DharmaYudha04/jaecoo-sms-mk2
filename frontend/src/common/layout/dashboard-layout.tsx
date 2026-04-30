@@ -165,7 +165,7 @@ export function DashboardLayout() {
                     </div>
                   </div>
 
-                  <form onSubmit={submitGlobalSearch} className="ml-auto flex min-w-0 flex-1 items-center gap-2 md:max-w-[440px]">
+                  <form onSubmit={submitGlobalSearch} className="hidden md:flex ml-auto flex min-w-0 flex-1 items-center gap-2 md:max-w-[440px]">
                     <Input value={searchValue} onChange={(event) => setSearchValue(event.target.value)} placeholder="Cari WO, nama, plat, HP, model..." className="min-w-0" />
                     <Button type="submit" variant="secondary" className="action-icon-button shrink-0" aria-label="Telusuri">
                       <SearchIcon className="h-4 w-4" />
@@ -193,6 +193,17 @@ export function DashboardLayout() {
                 </div>
               </div>
             </header>
+
+            {/* Mobile Search Card */}
+            <div className="px-4 mt-3 md:hidden">
+              <div className="glass-soft rounded-2xl border p-3 flex items-center gap-2">
+                <Input value={searchValue} onChange={(event) => setSearchValue(event.target.value)} placeholder="Cari WO, nama, plat, HP, model..." className="min-w-0 flex-1" />
+                <Button type="button" variant="secondary" className="action-icon-button shrink-0" onClick={(e)=>submitGlobalSearch(e as any)}>
+                  <SearchIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
 
             <main className="page-shell">
               <RouteTransitionOutlet routeKey={location.pathname} />
