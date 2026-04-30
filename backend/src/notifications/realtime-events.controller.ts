@@ -26,10 +26,7 @@ export class RealtimeEventsController {
 
   @Public()
   @Get('stream')
-  async stream(
-    @Query('token') token: string | undefined,
-    @Res() response: Response,
-  ) {
+  stream(@Query('token') token: string | undefined, @Res() response: Response) {
     if (!token) {
       throw new UnauthorizedException('Token diperlukan');
     }
