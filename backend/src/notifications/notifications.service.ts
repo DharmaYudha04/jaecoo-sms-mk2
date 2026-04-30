@@ -182,7 +182,7 @@ export class NotificationsService {
   }
 
   async markRead(userId: number, notificationId: number, kind: NotificationKind) {
-    return this.prisma.notificationRecipient.updateMany({
+    const result = await this.prisma.notificationRecipient.updateMany({
       where: {
         userId,
         notificationId,
@@ -190,10 +190,20 @@ export class NotificationsService {
       },
       data: { isRead: true, readAt: new Date() },
     });
+
+    if (result.count > 0) {
+      this.realtimeStreamService.publishToUsers(
+        [userId],
+        kind === 'broadcast' ? 'broadcast.read' : 'notification.read',
+        { notificationId, userId },
+      );
+    }
+
+    return result;
   }
 
   async markAllRead(userId: number, kind: NotificationKind) {
-    return this.prisma.notificationRecipient.updateMany({
+    const result = await this.prisma.notificationRecipient.updateMany({
       where: {
         userId,
         isRead: false,
@@ -201,6 +211,16 @@ export class NotificationsService {
       },
       data: { isRead: true, readAt: new Date() },
     });
+
+    if (result.count > 0) {
+      this.realtimeStreamService.publishToUsers(
+        [userId],
+        kind === 'broadcast' ? 'broadcasts.read' : 'notifications.read',
+        { userId },
+      );
+    }
+
+    return result;
   }
 
 

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Headers, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuditLogStatus } from '@prisma/client';
 import { Public } from '../common/auth.guard';
@@ -15,18 +15,13 @@ export class AuthController {
   @Public()
   @Post('login')
   async login(
-    @Body() body: { email?: string; password?: string },
+    @Body() body: { email: string; password: string },
     @Req() req: Request,
   ) {
     const normalizedEmail = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
-    const password = typeof body?.password === 'string' ? body.password : '';
-
-    if (!normalizedEmail || !password) {
-      throw new BadRequestException('Email dan password wajib diisi.');
-    }
 
     try {
-      const result = await this.authService.login(normalizedEmail, password);
+      const result = await this.authService.login(body.email, body.password);
       await this.auditService.log({
         actor: result.user,
         action: 'LOGIN_SUCCESS',
