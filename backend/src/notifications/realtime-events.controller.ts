@@ -10,6 +10,16 @@ import { Public } from '../common/auth.guard';
 import { parseToken } from '../common/auth';
 import { RealtimeStreamService } from './realtime-stream.service';
 
+const DEFAULT_HEARTBEAT_MS = 5 * 60 * 1000;
+
+function getHeartbeatMs() {
+  const configured = Number(process.env.REALTIME_HEARTBEAT_MS);
+  if (Number.isFinite(configured) && configured >= 60000) {
+    return configured;
+  }
+  return DEFAULT_HEARTBEAT_MS;
+}
+
 @Controller('events')
 export class RealtimeEventsController {
   constructor(private readonly realtimeStreamService: RealtimeStreamService) {}
@@ -37,7 +47,7 @@ export class RealtimeEventsController {
 
     const heartbeat = setInterval(() => {
       this.realtimeStreamService.publishHeartbeat(actor.id_user);
-    }, 25000);
+    }, getHeartbeatMs());
 
     response.on('close', () => {
       clearInterval(heartbeat);

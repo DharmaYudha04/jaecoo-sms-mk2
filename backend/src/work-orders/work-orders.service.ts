@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PriorityLevel, StatusServis, WashRequestStatus, WorkOrderStatus } from '@prisma/client';
 import { parseOptionalDate, parseToken } from '../common/auth';
 import { PrismaService } from '../prisma/prisma.service';
+import { RealtimeStreamService } from '../notifications/realtime-stream.service';
 
 const workOrderInclude = {
   kendaraan: { include: { pemilik: true } },
@@ -19,7 +20,27 @@ const workOrderInclude = {
 
 @Injectable()
 export class WorkOrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly realtimeStreamService: RealtimeStreamService,
+  ) {}
+
+  private async publishWorkOrderChanged(event: 'work_order.created' | 'work_order.updated', workOrderId: number, serviceId?: number | null) {
+    const users = await this.prisma.user.findMany({
+      where: { isActive: true },
+      select: { id_user: true },
+    });
+
+    this.realtimeStreamService.publishToUsers(
+      users.map((user) => user.id_user),
+      event,
+      {
+        workOrderId,
+        serviceId: serviceId ?? null,
+        ts: Date.now(),
+      },
+    );
+  }
 
   list() {
     return this.prisma.workOrder.findMany({
@@ -83,7 +104,7 @@ export class WorkOrdersService {
       throw new NotFoundException('Work order tidak ditemukan');
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const updatedWorkOrder = await this.prisma.$transaction(async (tx) => {
       if (body.customer) {
         await tx.pemilik.upsert({
           where: { nik: body.customer.nik },
@@ -181,6 +202,12 @@ export class WorkOrdersService {
         include: workOrderInclude,
       });
     });
+
+    if (updatedWorkOrder) {
+      await this.publishWorkOrderChanged('work_order.updated', updatedWorkOrder.id_wo, updatedWorkOrder.servis?.[0]?.id_servis);
+    }
+
+    return updatedWorkOrder;
   }
 
   async create(
@@ -222,7 +249,7 @@ export class WorkOrdersService {
 
     const authUser = authorization ? parseToken(authorization) : null;
 
-    return this.prisma.$transaction(async (tx) => {
+    const createdWorkOrder = await this.prisma.$transaction(async (tx) => {
       await tx.pemilik.upsert({
         where: { nik: body.customer!.nik },
         update: {
@@ -311,6 +338,12 @@ export class WorkOrdersService {
         include: workOrderInclude,
       });
     });
+
+    if (createdWorkOrder) {
+      await this.publishWorkOrderChanged('work_order.created', createdWorkOrder.id_wo, createdWorkOrder.servis?.[0]?.id_servis);
+    }
+
+    return createdWorkOrder;
   }
 
   async delete(id: number) {

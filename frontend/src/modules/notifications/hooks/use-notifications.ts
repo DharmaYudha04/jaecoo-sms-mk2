@@ -18,8 +18,6 @@ import {
 import type { NotificationFilter } from '@/modules/notifications/types/notification.types';
 import type { AppNotification, Role } from '@/common/types/domain';
 
-const FALLBACK_REFETCH_MS = 4000;
-
 function removeItemFromCaches(queryClient: ReturnType<typeof useQueryClient>, namespace: 'notifications' | 'broadcasts', id: number) {
   const queryPrefix = namespace === 'notifications' ? 'notifications' : 'broadcasts';
   queryClient.setQueriesData<AppNotification[]>({ queryKey: [queryPrefix] }, (current) => {
@@ -32,9 +30,6 @@ export function useNotifications(filters: NotificationFilter) {
   return useQuery({
     queryKey: queryKeys.notifications(filters),
     queryFn: () => getNotifications(filters),
-    refetchInterval: FALLBACK_REFETCH_MS,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
   });
 }
 
@@ -42,9 +37,6 @@ export function useNotificationUnreadCount() {
   return useQuery({
     queryKey: queryKeys.notificationsUnreadCount,
     queryFn: getNotificationUnreadCount,
-    refetchInterval: FALLBACK_REFETCH_MS,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
   });
 }
 
@@ -99,9 +91,6 @@ export function useBroadcasts(filters: NotificationFilter) {
   return useQuery({
     queryKey: queryKeys.broadcasts(filters),
     queryFn: () => getBroadcasts(filters),
-    refetchInterval: FALLBACK_REFETCH_MS,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
   });
 }
 
@@ -109,9 +98,6 @@ export function useBroadcastUnreadCount() {
   return useQuery({
     queryKey: queryKeys.broadcastsUnreadCount,
     queryFn: getBroadcastUnreadCount,
-    refetchInterval: FALLBACK_REFETCH_MS,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
   });
 }
 
@@ -125,7 +111,6 @@ export function useMarkBroadcastRead() {
     },
   });
 }
-
 
 export function useMarkAllBroadcastsRead() {
   const queryClient = useQueryClient();
@@ -168,14 +153,8 @@ export function useSendBroadcast() {
   return useMutation({
     mutationFn: (payload: { title: string; message: string; targetRoles: Role[] }) => sendBroadcast(payload),
     onSuccess: () => {
-      void Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['broadcasts'] }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.broadcastsUnreadCount }),
-        queryClient.refetchQueries({ queryKey: ['broadcasts'] }),
-        queryClient.refetchQueries({ queryKey: queryKeys.broadcastsUnreadCount }),
-        queryClient.refetchQueries({ queryKey: ['notifications'] }),
-        queryClient.refetchQueries({ queryKey: queryKeys.notificationsUnreadCount }),
-      ]);
+      void queryClient.invalidateQueries({ queryKey: ['broadcasts'] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.broadcastsUnreadCount });
     },
   });
 }
